@@ -6,15 +6,23 @@
 #include "Mqtt.h"
 #include "SensorsModule.h"
 
-MqttClient mqtt("envGadgetLite01", MQTT_HOST, MQTT_PORT);
+MqttClient mqtt(HOSTNAME, MQTT_HOST, MQTT_PORT);
 DataModule dataModule;
 SensorsModule sensors(&dataModule);
+
+void wifiConnectBlocking() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(STASSID, STAPSK);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(10);
+  }
+}
 
 void setup() {
   sensors.setup();
 
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(STASSID, STAPSK);
+  wifiConnectBlocking();
 
   mqtt.setup();
 
@@ -23,7 +31,7 @@ void setup() {
 
 void publish(const char* type, float value) {
   char topic[30];
-  sprintf(topic, "env/bedroom/%s", type);
+  sprintf(topic, "env/%s/%s", ROOM, type);
   mqtt.publish(topic, value);
 }
 
