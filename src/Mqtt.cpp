@@ -16,8 +16,16 @@ bool MqttClient::isConnected() {
     return _client.connected();
 }
 
-void MqttClient::connect() {
-    _client.connect(_clientId);
+bool MqttClient::connect() {
+    return _client.connect(_clientId);
+}
+
+void MqttClient::disconnect() {
+    _client.disconnect();
+}
+
+int MqttClient::state() {
+    return _client.state();
 }
 
 void MqttClient::update(unsigned long t) {
@@ -30,18 +38,29 @@ void MqttClient::update(unsigned long t) {
     _client.loop();
 }
 
-void MqttClient::publish(const char* topic, const char* payload) {
+bool MqttClient::publish(const char* topic, const char* payload) {
     if (_client.connected()) {
-        _client.publish(topic, payload);
+#ifdef DEBUG
+        Serial.printf("Sending to [%s]: '%s'\n", topic, payload);
+#endif
+        return _client.publish(topic, payload, false);
     }
+#ifdef DEBUG
+    Serial.println("Mqtt not connected");
+#endif
+    return false;
 }
 
-void MqttClient::publish(const char* type, float value) {
-    if (_client.connected() && value != NAN) {
+bool MqttClient::publish(const char* type, float value) {
+    if (!isnan(value)) {
         char payload[10];
         sprintf(payload, "%.1f", value);
-        publish(type, payload);
+        return publish(type, payload);
     }
+#ifdef DEBUG
+    Serial.println("Value is NaN");
+#endif
+    return false;
 }
 
 void MqttClient::callback(char* topic, byte* payload, unsigned int length) {

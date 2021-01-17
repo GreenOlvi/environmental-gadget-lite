@@ -11,9 +11,13 @@ void SensorsModule::setup() {
 
 void SensorsModule::update(const unsigned long t) {
     if (t - _lastDhtUpdate >= _dhtSamplingPeriod) {
-        TempAndHumidity th = _dht.getTempAndHumidity();
-        _data->setTemp(th.temperature);
-        _data->setHumidity(th.humidity);
+        takeMeasurements();
         _lastDhtUpdate = t;
     }
+}
+
+void SensorsModule::takeMeasurements() {
+    TempAndHumidity th = _dht.getTempAndHumidity();
+    _data->setTemp(th.temperature);
+    _data->setHumidity(th.humidity);
 }

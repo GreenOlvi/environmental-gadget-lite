@@ -14,6 +14,7 @@ class SensorsModule : public Module {
         SensorsModule(DataModule* dataModule);
         void setup(void) override;
         void update(const unsigned long t) override;
+        void takeMeasurements();
     private:
         DataModule* _data;
 

@@ -15,8 +15,11 @@ class MqttClient : public Module {
         bool isConnected(void);
         void setup(void) override;
         void update(const unsigned long) override;
-        void publish(const char* topic, const char* payload);
-        void publish(const char* type, float value);
+        bool connect(void);
+        void disconnect(void);
+        int state(void);
+        bool publish(const char* topic, const char* payload);
+        bool publish(const char* type, float value);
     private:
         const char* _clientId;
         const char* _hostname;
@@ -24,7 +27,6 @@ class MqttClient : public Module {
         WiFiClient _wifiClient;
         PubSubClient _client;
         unsigned long _lastUpdate = 0;
-        void connect(void);
         void callback(char* topic, byte* payload, unsigned int length);
 };
 
