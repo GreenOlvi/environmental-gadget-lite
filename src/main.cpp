@@ -2,14 +2,16 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 
-#define DEBUG
-
 #include "secrets.h"
 #include "common.h"
 #include "Mqtt.h"
 #include "SensorsModule.h"
 
+#ifdef DEBUG
+#define SLEEPTIME 10e6
+#else
 #define SLEEPTIME 60e6
+#endif
 
 struct RtcData {
   uint32_t crc32;
