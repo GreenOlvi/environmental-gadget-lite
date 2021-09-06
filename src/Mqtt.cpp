@@ -40,14 +40,11 @@ void MqttClient::update(unsigned long t) {
 
 bool MqttClient::publish(const char* topic, const char* payload) {
     if (_client.connected()) {
-#ifdef DEBUG
-        Serial.printf("Sending to [%s]: '%s'\n", topic, payload);
-#endif
+        logf2("Sending to [%s]: '%s'\n", topic, payload);
         return _client.publish(topic, payload, false);
     }
-#ifdef DEBUG
-    Serial.println("Mqtt not connected");
-#endif
+
+    logln("Mqtt not connected");
     return false;
 }
 
@@ -57,9 +54,8 @@ bool MqttClient::publish(const char* type, float value) {
         sprintf(payload, "%.1f", value);
         return publish(type, payload);
     }
-#ifdef DEBUG
-    Serial.println("Value is NaN");
-#endif
+
+    logln("Value is NaN");
     return false;
 }
 

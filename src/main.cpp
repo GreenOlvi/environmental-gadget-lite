@@ -1,8 +1,10 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
+#include <ESP8266httpUpdate.h>
 
 #include "secrets.h"
+#include "log.h"
 #include "common.h"
 #include "Mqtt.h"
 #include "SensorsModule.h"
@@ -39,9 +41,7 @@ void wifiSetup() {
   WiFi.mode(WIFI_OFF);
   WiFi.forceSleepBegin();
   delay(1);
-#ifdef DEBUG
-  Serial.println("Wifi off");
-#endif
+  logln("Wifi off");
 }
 
 bool tryReadWifiSettings() {
@@ -56,9 +56,7 @@ bool tryReadWifiSettings() {
       rtcValid = true;
     }
   }
-#ifdef DEBUG
-  Serial.printf("RTC data valid: %s\n", rtcValid ? "true" : "false");
-#endif
+  logf1("RTC data valid: %s\n", rtcValid ? "true" : "false");
   return rtcValid;
 }
 
@@ -78,9 +76,7 @@ void wifiConnectBlocking() {
   delay(1);
   WiFi.persistent(false);
 
-#ifdef DEBUG
-  Serial.println("Start wifi");
-#endif
+  logln("Start wifi");
 
   WiFi.mode(WIFI_STA);
   if (ip) {
@@ -121,11 +117,9 @@ void wifiConnectBlocking() {
 
   MDNS.begin(HOSTNAME);
 
-#ifdef DEBUG
-  Serial.println("Wifi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-#endif
+  logln("Wifi connected");
+  logln("IP address: ");
+  logln(WiFi.localIP());
 
   saveWifiSettings();
 }
@@ -150,9 +144,7 @@ void publishMetrics() {
 }
 
 void setup() {
-#ifdef DEBUG
   Serial.begin(76800);
-#endif
   wifiSetup();
 
   dataModule.setup();
@@ -164,22 +156,17 @@ void setup() {
 
   mqtt.setup();
   if (mqtt.connect()) {
-#ifdef DEBUG
-    Serial.println("Sending data");
-#endif
+    logln("Sending data");
     publishSensorData();
     publishMetrics();
     mqtt.disconnect();
-#ifdef DEBUG
   } else {
-    Serial.printf("Mqtt failed, rc=%d\n", mqtt.state());
-#endif
+    logf1("Mqtt failed, rc=%d\n", mqtt.state());
   }
 
-#ifdef DEBUG
-  Serial.printf("Millis = %lu\n", millis());
-  Serial.println("Go back to sleep");
-#endif
+  logf1("Millis = %lu\n", millis());
+  logln("Go back to sleep");
+
   WiFi.disconnect(true);
   delay(1);
   ESP.deepSleep(SLEEPTIME, WAKE_RF_DISABLED);
