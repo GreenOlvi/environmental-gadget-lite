@@ -8,6 +8,7 @@
 #include "common.h"
 #include "Mqtt.h"
 #include "SensorsModule.h"
+#include "Ota.h"
 
 #ifdef DEBUG
 #define SLEEPTIME 10e6
@@ -36,6 +37,7 @@ IPAddress dns;
 MqttClient mqtt(HOSTNAME, MQTT_HOST, MQTT_PORT);
 DataModule dataModule;
 SensorsModule sensors(&dataModule);
+Ota ota(OTA_URL);
 
 void wifiSetup() {
   WiFi.mode(WIFI_OFF);
@@ -144,7 +146,12 @@ void publishMetrics() {
 }
 
 void setup() {
+#ifdef DEBUG
   Serial.begin(76800);
+#endif
+  logf1("Running version '%s'", FIRMWARE_VERSION);
+  logln();
+
   wifiSetup();
 
   dataModule.setup();
@@ -163,6 +170,9 @@ void setup() {
   } else {
     logf1("Mqtt failed, rc=%d\n", mqtt.state());
   }
+
+  ota.setup();
+  ota.update(millis());
 
   logf1("Millis = %lu\n", millis());
   logln("Go back to sleep");
