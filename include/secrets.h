@@ -1,12 +1,23 @@
 #ifndef SECRETS_H
-#define FIRMWARE_VERSION "0.0.1"
-#define HOSTNAME "EnvGadgetLite"
-#define ROOM "workshop"
+
+#define FIRMWARE_VERSION "0.0.3"
+
+#undef DEBUG
+
 #define STASSID "..."
 #define STAPSK "..."
 #define MQTT_HOST "..."
 #define MQTT_PORT 1883
+
+#ifdef DEBUG
+#undef OTA_ENABLED
+#else
+#define OTA_ENABLED
+#endif
+
 #define OTA_URL "..."
 #define OTA_CERT_FINGERPRINT "..."
+
 #error "Fill the values"
+
 #endif
