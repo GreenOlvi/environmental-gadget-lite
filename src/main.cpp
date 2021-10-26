@@ -163,7 +163,6 @@ void publishMetrics() {
 }
 
 void setup() {
-#ifdef DEBUG
   Serial.begin(76800);
 #endif
 
