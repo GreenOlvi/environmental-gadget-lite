@@ -4,9 +4,11 @@
 #include <ESP8266httpUpdate.h>
 
 #include "secrets.h"
+#include "log.h"
 #include "common.h"
 #include "Mqtt.h"
 #include "SensorsModule.h"
+#include "Ota.h"
 
 #ifdef DEBUG
 #define SLEEPTIME 10e6
@@ -32,9 +34,27 @@ IPAddress gateway;
 IPAddress subnet;
 IPAddress dns;
 
-MqttClient mqtt(HOSTNAME, MQTT_HOST, MQTT_PORT);
+char devName[10];
+MqttClient *mqtt;
 DataModule dataModule;
 SensorsModule sensors(&dataModule);
+
+#ifdef OTA_ENABLED
+Ota ota(OTA_URL);
+#endif
+
+void getDeviceName(char* name) {
+  auto mac = WiFi.macAddress();
+  strcpy(name, "ls-");
+  int nIndex = 3;
+  for (unsigned int i = 9; i < 17; i++)  {
+    char c = mac[i];
+    if (c != ':') {
+      name[nIndex++] = tolower(c);
+    }
+  }
+  name[nIndex] = 0;
+}
 
 void wifiSetup() {
   WiFi.mode(WIFI_OFF);
@@ -114,7 +134,7 @@ void wifiConnectBlocking() {
     wifiStatus = WiFi.status();
   }
 
-  MDNS.begin(HOSTNAME);
+  MDNS.begin(devName);
 
   logln("Wifi connected");
   logln("IP address: ");
@@ -124,9 +144,9 @@ void wifiConnectBlocking() {
 }
 
 void publish(const char* type, float value) {
-  char topic[30];
-  sprintf(topic, "env/%s/%s", ROOM, type);
-  mqtt.publish(topic, value);
+  char topic[4 + 14 + 10];
+  sprintf(topic, "env/%s/%s", devName, type);
+  mqtt->publish(topic, value);
 }
 
 void publishSensorData() {
@@ -136,14 +156,24 @@ void publishSensorData() {
 
 void publishMetrics() {
   char topic[30];
-  snprintf(topic, 30, "tele/%s/awakeTime", ROOM);
+  snprintf(topic, 30, "tele/%s/awakeTime", devName);
   char value[10];
   snprintf(value, 10, "%lu", millis());
-  mqtt.publish(topic, value);
+  mqtt->publish(topic, value);
 }
 
 void setup() {
   Serial.begin(76800);
+#endif
+
+  getDeviceName(devName);
+
+  logf1("Device '%s'", devName);
+  logln();
+
+  logf1("Running version '%s'", FIRMWARE_VERSION);
+  logln();
+
   wifiSetup();
 
   dataModule.setup();
@@ -152,16 +182,22 @@ void setup() {
   sensors.takeMeasurements();
 
   wifiConnectBlocking();
+  mqtt = new MqttClient(devName, MQTT_HOST, MQTT_PORT);
 
-  mqtt.setup();
-  if (mqtt.connect()) {
+  mqtt->setup();
+  if (mqtt->connect()) {
     logln("Sending data");
     publishSensorData();
     publishMetrics();
-    mqtt.disconnect();
+    mqtt->disconnect();
   } else {
-    logf1("Mqtt failed, rc=%d\n", mqtt.state());
+    logf1("Mqtt failed, rc=%d\n", mqtt->state());
   }
+
+#ifdef OTA_ENABLED
+  ota.setup();
+  ota.update(millis());
+#endif
 
   logf1("Millis = %lu\n", millis());
   logln("Go back to sleep");

@@ -4,8 +4,7 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-
-#include "common.h"
+#include "log.h"
 #include "Module.h"
 
 #define RECONNECT_DELAY 10000

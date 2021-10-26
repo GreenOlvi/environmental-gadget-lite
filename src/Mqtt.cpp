@@ -40,7 +40,7 @@ void MqttClient::update(unsigned long t) {
 
 bool MqttClient::publish(const char* topic, const char* payload) {
     if (_client.connected()) {
-        logf("Sending to [%s]: '%s'\n", topic, payload);
+        logf2("Sending to [%s]: '%s'\n", topic, payload);
         return _client.publish(topic, payload, false);
     }
 
