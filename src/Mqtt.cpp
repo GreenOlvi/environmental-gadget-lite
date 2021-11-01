@@ -2,10 +2,12 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
+#include "secrets.h"
 #include "Mqtt.h"
 
 MqttClient::MqttClient(const char* clientId, const char* hostname, unsigned short port)
     : _clientId(clientId), _hostname(hostname), _port(port), _wifiClient(),  _client(_wifiClient) {
+    logf1("Mqtt client name:%s\n", clientId);
 }
 
 void MqttClient::setup() {

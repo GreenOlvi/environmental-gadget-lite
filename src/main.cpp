@@ -67,12 +67,12 @@ bool tryReadWifiSettings() {
   bool rtcValid = false;
   if (ESP.rtcUserMemoryRead(0, (uint32_t*)&rtcData, sizeof(rtcData))) {
     uint32_t crc = calculateCRC32(((uint8_t*)&rtcData) + 4, sizeof(rtcData) - 4);
-    if ( crc == rtcData.crc32 ) {
+    rtcValid = crc == rtcData.crc32;
+    if (rtcValid) {
       ip = IPAddress(rtcData.ip);
       gateway = IPAddress(rtcData.gateway);
       subnet = IPAddress(rtcData.subnet);
       dns = IPAddress(dns);
-      rtcValid = true;
     }
   }
   logf1("RTC data valid: %s\n", rtcValid ? "true" : "false");
@@ -99,7 +99,7 @@ void wifiConnectBlocking() {
 
   WiFi.mode(WIFI_STA);
   if (ip) {
-    WiFi.config(ip, dns, subnet, dns);
+    WiFi.config(ip, gateway, subnet, dns);
   }
 
   if (tryReadWifiSettings()) {
@@ -163,6 +163,7 @@ void publishMetrics() {
 }
 
 void setup() {
+#ifdef DEBUG
   Serial.begin(76800);
 #endif
 
