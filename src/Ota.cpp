@@ -1,6 +1,6 @@
 #include "Ota.h"
 
-Ota::Ota(const char *url) : _url(new String(url)), _client(new ESP8266HTTPUpdate()) {
+Ota::Ota(const char *url, const char *version_tag) : _url(new String(url)), _version_tag(version_tag), _client(new ESP8266HTTPUpdate()) {
     logln("Ota ctor()");
 }
 
@@ -18,7 +18,7 @@ void Ota::setup(void) {
 
 void Ota::update(const unsigned long) {
     logln("Ota update()");
-    auto result = _client->update(*this->_wifi, *this->_url, FIRMWARE_VERSION);
+    auto result = _client->update(*this->_wifi, *this->_url, _version_tag);
 
     switch (result) {
         case HTTP_UPDATE_FAILED:

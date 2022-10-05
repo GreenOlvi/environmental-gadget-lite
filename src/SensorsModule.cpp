@@ -1,6 +1,6 @@
 #include "SensorsModule.h"
 
-SensorsModule::SensorsModule(DataModule* dataModule)
+SensorsModule::SensorsModule(DataModule *dataModule)
     : _data(dataModule), _dht() {
 }
 
@@ -18,6 +18,6 @@ void SensorsModule::update(const unsigned long t) {
 
 void SensorsModule::takeMeasurements() {
     TempAndHumidity th = _dht.getTempAndHumidity();
-    _data->setTemp(th.temperature);
-    _data->setHumidity(th.humidity);
+    _data->setTemp(roundTwoDigits(th.temperature));
+    _data->setHumidity(roundTwoDigits(th.humidity));
 }

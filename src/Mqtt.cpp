@@ -5,7 +5,7 @@
 #include "secrets.h"
 #include "Mqtt.h"
 
-MqttClient::MqttClient(const char* clientId, const char* hostname, unsigned short port)
+MqttClient::MqttClient(const char *clientId, const char *hostname, unsigned short port)
     : _clientId(clientId), _hostname(hostname), _port(port), _wifiClient(),  _client(_wifiClient) {
     logf1("Mqtt client name:%s\n", clientId);
 }
@@ -40,7 +40,7 @@ void MqttClient::update(unsigned long t) {
     _client.loop();
 }
 
-bool MqttClient::publish(const char* topic, const char* payload) {
+bool MqttClient::publish(const char *topic, const char *payload) {
     if (_client.connected()) {
         logf2("Sending to [%s]: '%s'\n", topic, payload);
         return _client.publish(topic, payload, false);
@@ -50,7 +50,7 @@ bool MqttClient::publish(const char* topic, const char* payload) {
     return false;
 }
 
-bool MqttClient::publish(const char* type, float value) {
+bool MqttClient::publish(const char *type, float value) {
     if (!isnan(value)) {
         char payload[10];
         sprintf(payload, "%.1f", value);
@@ -61,5 +61,5 @@ bool MqttClient::publish(const char* type, float value) {
     return false;
 }
 
-void MqttClient::callback(char* topic, byte* payload, unsigned int length) {
+void MqttClient::callback(char *topic, byte *payload, unsigned int length) {
 }

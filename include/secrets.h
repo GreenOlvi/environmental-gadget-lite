@@ -1,8 +1,15 @@
 #ifndef SECRETS_H
-
-#define FIRMWARE_VERSION "0.0.4"
+#define SECRETS_H
 
 #undef DEBUG
+
+#define VERSION_PREFIX "1.0.0"
+
+#ifdef DEBUG
+#define VERSION_SUFFIX "-debug"
+#else
+#define VERSION_SUFFIX
+#endif
 
 #define STASSID "..."
 #define STAPSK "..."
@@ -17,7 +24,5 @@
 
 #define OTA_URL "..."
 #define OTA_CERT_FINGERPRINT "..."
-
-#error "Fill the values"
 
 #endif

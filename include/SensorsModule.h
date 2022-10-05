@@ -6,17 +6,18 @@
 
 #include "Module.h"
 #include "DataModule.h"
+#include "common.h"
 
 #define ONE_WIRE_BUS D7
 
 class SensorsModule : public Module {
     public:
-        SensorsModule(DataModule* dataModule);
+        SensorsModule(DataModule *dataModule);
         void setup(void) override;
         void update(const unsigned long t) override;
         void takeMeasurements();
     private:
-        DataModule* _data;
+        DataModule *_data;
 
         DHTesp _dht;
 

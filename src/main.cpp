@@ -9,12 +9,15 @@
 #include "Mqtt.h"
 #include "SensorsModule.h"
 #include "Ota.h"
+#include "SensorData.h"
 
 #ifdef DEBUG
 #define SLEEPTIME 10e6
 #else
 #define SLEEPTIME 60e6
 #endif
+
+const char *version_tag = VERSION_PREFIX VERSION_SUFFIX;
 
 struct RtcData {
   uint32_t crc32;
@@ -40,7 +43,7 @@ DataModule dataModule;
 SensorsModule sensors(&dataModule);
 
 #ifdef OTA_ENABLED
-Ota ota(OTA_URL);
+Ota ota(OTA_URL, version_tag);
 #endif
 
 void getDeviceName(char* name) {
@@ -143,23 +146,21 @@ void wifiConnectBlocking() {
   saveWifiSettings();
 }
 
-void publish(const char* type, float value) {
-  char topic[4 + 14 + 10];
-  sprintf(topic, "env/%s/%s", devName, type);
-  mqtt->publish(topic, value);
-}
+void publishAllData() {
+  auto data = SensorData();
+  data.deviceName = devName;
+  data.version = version_tag;
+  data.connectionTime = millis();
+  data.temperatureIn = dataModule.getTemp();
+  data.humidityIn = dataModule.getHumidity();
 
-void publishSensorData() {
-  publish("temp_in", dataModule.getTemp());
-  publish("hum_in", dataModule.getHumidity());
-}
+  String serialized;
+  serializeData(data, serialized);
 
-void publishMetrics() {
-  char topic[30];
-  snprintf(topic, 30, "tele/%s/awakeTime", devName);
-  char value[10];
-  snprintf(value, 10, "%lu", millis());
-  mqtt->publish(topic, value);
+  char topic[50];
+  sprintf(topic, "env/%s/data", devName);
+
+  mqtt->publish(topic, serialized.c_str());
 }
 
 void setup() {
@@ -172,7 +173,7 @@ void setup() {
   logf1("Device '%s'", devName);
   logln();
 
-  logf1("Running version '%s'", FIRMWARE_VERSION);
+  logf1("Running version '%s'", version_tag);
   logln();
 
   wifiSetup();
@@ -188,8 +189,7 @@ void setup() {
   mqtt->setup();
   if (mqtt->connect()) {
     logln("Sending data");
-    publishSensorData();
-    publishMetrics();
+    publishAllData();
     mqtt->disconnect();
   } else {
     logf1("Mqtt failed, rc=%d\n", mqtt->state());
