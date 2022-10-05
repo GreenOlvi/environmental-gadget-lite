@@ -1,8 +1,6 @@
 #ifndef SECRETS_H
 #define SECRETS_H
 
-#undef DEBUG
-
 #define VERSION_PREFIX "1.0.0"
 
 #ifdef DEBUG
