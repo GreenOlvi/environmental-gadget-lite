@@ -1,0 +1,14 @@
+{
+    "WiFi": {
+        "SSID": "...",
+        "Password": "..."
+    },
+    "Mqtt": {
+        "Host": "...",
+        "Port": 1883
+    },
+    "Ota": {
+        "Url": "...",
+        "CertFingerprint": "..."
+    }
+}

@@ -1,9 +1,19 @@
+#define VERSION_PREFIX "1.0.0"
+
+#ifdef DEBUG
+#define VERSION_SUFFIX "-debug"
+#undef OTA_ENABLED
+#else
+#define VERSION_SUFFIX
+#define OTA_ENABLED
+#endif
+
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266httpUpdate.h>
 
-#include "secrets.h"
+#include "configuration.h"
 #include "log.h"
 #include "common.h"
 #include "Mqtt.h"
@@ -37,14 +47,12 @@ IPAddress gateway;
 IPAddress subnet;
 IPAddress dns;
 
+Config config;
+
 char devName[10];
 MqttClient *mqtt;
 DataModule dataModule;
 SensorsModule sensors(&dataModule);
-
-#ifdef OTA_ENABLED
-Ota ota(OTA_URL, version_tag);
-#endif
 
 void getDeviceName(char* name) {
   auto mac = WiFi.macAddress();
@@ -63,7 +71,7 @@ void wifiSetup() {
   WiFi.mode(WIFI_OFF);
   WiFi.forceSleepBegin();
   delay(1);
-  logln("Wifi off");
+  log("Wifi off");
 }
 
 bool tryReadWifiSettings() {
@@ -78,7 +86,7 @@ bool tryReadWifiSettings() {
       dns = IPAddress(dns);
     }
   }
-  logf1("RTC data valid: %s\n", rtcValid ? "true" : "false");
+  log("RTC data valid: %s\n", rtcValid ? "true" : "false");
   return rtcValid;
 }
 
@@ -98,7 +106,7 @@ void wifiConnectBlocking() {
   delay(1);
   WiFi.persistent(false);
 
-  logln("Start wifi");
+  log("Start wifi");
 
   WiFi.mode(WIFI_STA);
   if (ip) {
@@ -106,9 +114,9 @@ void wifiConnectBlocking() {
   }
 
   if (tryReadWifiSettings()) {
-    WiFi.begin(STASSID, STAPSK, rtcData.channel, rtcData.ap_mac, true);
+    WiFi.begin(config.WiFi.SSID, config.WiFi.Password, rtcData.channel, rtcData.ap_mac, true);
   } else {
-    WiFi.begin(STASSID, STAPSK);
+    WiFi.begin(config.WiFi.SSID, config.WiFi.Password);
   }
 
   int retries = 0;
@@ -122,7 +130,7 @@ void wifiConnectBlocking() {
       delay(10);
       WiFi.forceSleepWake();
       delay(10);
-      WiFi.begin(STASSID, STAPSK);
+      WiFi.begin(config.WiFi.SSID, config.WiFi.Password);
     }
 
     if (retries == 600) {
@@ -139,9 +147,8 @@ void wifiConnectBlocking() {
 
   MDNS.begin(devName);
 
-  logln("Wifi connected");
-  logln("IP address: ");
-  logln(WiFi.localIP());
+  log("Wifi connected");
+  log("IP address: %s", WiFi.localIP().toString().c_str());
 
   saveWifiSettings();
 }
@@ -170,11 +177,19 @@ void setup() {
 
   getDeviceName(devName);
 
-  logf1("Device '%s'", devName);
-  logln();
+  log("Device '%s'", devName);
 
-  logf1("Running version '%s'", version_tag);
-  logln();
+  if (!LittleFS.begin())
+  {
+    log("Failed to initialize LittleFS");
+  }
+
+  if (!loadConfiguration(config))
+  {
+    log("Could not load config");
+  }
+
+  log("Running version '%s'", version_tag);
 
   wifiSetup();
 
@@ -184,24 +199,25 @@ void setup() {
   sensors.takeMeasurements();
 
   wifiConnectBlocking();
-  mqtt = new MqttClient(devName, MQTT_HOST, MQTT_PORT);
+  mqtt = new MqttClient(devName, config.Mqtt.Host.c_str(), config.Mqtt.Port);
 
   mqtt->setup();
   if (mqtt->connect()) {
-    logln("Sending data");
+    log("Sending data");
     publishAllData();
     mqtt->disconnect();
   } else {
-    logf1("Mqtt failed, rc=%d\n", mqtt->state());
+    log("Mqtt failed, rc=%d\n", mqtt->state());
   }
 
 #ifdef OTA_ENABLED
+  Ota ota(config.Ota.Url.c_str(), config.Ota.CertFingerprint.c_str(), version_tag);
   ota.setup();
   ota.update(millis());
 #endif
 
-  logf1("Millis = %lu\n", millis());
-  logln("Go back to sleep");
+  log("Millis = %lu\n", millis());
+  log("Go back to sleep");
 
   WiFi.disconnect(true);
   delay(1);
