@@ -1,11 +1,9 @@
-#include <Arduino.h>
-#include <ESP8266WiFi.h>
-#include <PubSubClient.h>
 
 #include "Mqtt.h"
 
-MqttClient::MqttClient(const char* clientId, const char* hostname, unsigned short port)
+MqttClient::MqttClient(const char *clientId, const char *hostname, unsigned short port)
     : _clientId(clientId), _hostname(hostname), _port(port), _wifiClient(),  _client(_wifiClient) {
+    log("Mqtt client name:%s\nHostname=%s\nPort=%d", _clientId, _hostname, _port);
 }
 
 void MqttClient::setup() {
@@ -38,26 +36,26 @@ void MqttClient::update(unsigned long t) {
     _client.loop();
 }
 
-bool MqttClient::publish(const char* topic, const char* payload) {
+bool MqttClient::publish(const char *topic, const char *payload) {
     if (_client.connected()) {
-        logf2("Sending to [%s]: '%s'\n", topic, payload);
+        log("Sending to [%s]: '%s'\n", topic, payload);
         return _client.publish(topic, payload, false);
     }
 
-    logln("Mqtt not connected");
+    log("Mqtt not connected");
     return false;
 }
 
-bool MqttClient::publish(const char* type, float value) {
+bool MqttClient::publish(const char *type, float value) {
     if (!isnan(value)) {
         char payload[10];
         sprintf(payload, "%.1f", value);
         return publish(type, payload);
     }
 
-    logln("Value is NaN");
+    log("Value is NaN");
     return false;
 }
 
-void MqttClient::callback(char* topic, byte* payload, unsigned int length) {
+void MqttClient::callback(char *topic, byte *payload, unsigned int length) {
 }

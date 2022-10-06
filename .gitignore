@@ -47,4 +47,5 @@ tags
 # Ignore all local history of files
 .history
 
+data/config.json
 /tmp

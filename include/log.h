@@ -2,15 +2,9 @@
 #define log_h
 
 #ifdef DEBUG
-#define log(x) Serial.print(x)
-#define logf1(x, a) Serial.printf(x, a)
-#define logf2(x, a, b) Serial.printf(x, a, b)
-#define logln(x) Serial.println(x)
+#define log(format, ...) Serial.printf(format "\n", ##__VA_ARGS__)
 #else
-#define log(x)
-#define logf1(x, a)
-#define logf2(x, a, b)
-#define logln(x)
+#define log(x, ...)
 #endif
 
 #endif
