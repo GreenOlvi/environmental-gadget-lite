@@ -1,4 +1,3 @@
-
 #include "Mqtt.h"
 
 MqttClient::MqttClient(const char *clientId, const char *hostname, unsigned short port)
@@ -27,35 +26,25 @@ int MqttClient::state() {
 }
 
 void MqttClient::update(unsigned long t) {
-    if (t - _lastUpdate >= RECONNECT_DELAY) {
-        if (WiFi.isConnected() && !_client.connected()) {
-            connect();
-        }
-        _lastUpdate = t;
-    }
     _client.loop();
 }
 
 bool MqttClient::publish(const char *topic, const char *payload) {
     if (_client.connected()) {
         log("Sending to [%s]: '%s'\n", topic, payload);
-        return _client.publish(topic, payload, false);
+        _client.beginPublish(topic, strlen(payload), false);
+        _client.print(payload);
+        return _client.endPublish();
     }
 
     log("Mqtt not connected");
     return false;
 }
 
-bool MqttClient::publish(const char *type, float value) {
-    if (!isnan(value)) {
-        char payload[10];
-        sprintf(payload, "%.1f", value);
-        return publish(type, payload);
-    }
-
-    log("Value is NaN");
-    return false;
+bool MqttClient::subscribe(const char *topic) {
+    return _client.subscribe(topic);
 }
 
-void MqttClient::callback(char *topic, byte *payload, unsigned int length) {
+void MqttClient::setCallback(MQTT_CALLBACK_SIGNATURE) {
+    _client.setCallback(callback);
 }
