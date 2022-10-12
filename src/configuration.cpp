@@ -47,12 +47,61 @@ bool loadConfiguration(Config &config) {
     if (deserializationError) {
         log("Failed to read file");
         return false;
-
     }
     log("File deserialized");
 
     readConfig(doc.as<JsonObject>(), config);
     log("Config read");
+
+    file.close();
+    log("File closed");
+
+    return true;
+}
+
+void writeWiFiConfig(const WiFiConfig &config, JsonObject &output) {
+    output["SSID"] = config.SSID;
+    output["Password"] = config.Password;
+}
+
+void writeMqttConfig(const MqttConfig &config, JsonObject &output) {
+    output["Host"] = config.Host;
+    output["Port"] = config.Port;
+}
+
+void writeOtaConfig(const OtaConfig &config, JsonObject &output) {
+    output["Url"] = config.Url;
+    output["CertFingerprint"] = config.CertFingerprint;
+}
+
+void writeConfiguration(const Config &config, JsonDocument &output) {
+    auto wifi = output.createNestedObject("WiFi");
+    writeWiFiConfig(config.WiFi, wifi);
+    auto mqtt = output.createNestedObject("Mqtt");
+    writeMqttConfig(config.Mqtt, mqtt);
+    auto ota = output.createNestedObject("Ota");
+    writeOtaConfig(config.Ota, ota);
+}
+
+bool saveConfiguration(const Config &config) {
+    log("Saving config to '%s'", ConfigFile);
+    auto file = LittleFS.open(ConfigFile, FILE_WRITE);
+    if (!file) {
+        log("Could not open config file for writing");
+        return false;
+    }
+    log("File opened");
+
+    StaticJsonDocument<512> doc;
+
+    writeConfiguration(config, doc);
+    log("Config written");
+
+    if (serializeJson(doc, file) == 0) {
+        log("Failed to serialize config");
+        return false;
+    }
+    log("Config serialized");
 
     file.close();
     log("File closed");

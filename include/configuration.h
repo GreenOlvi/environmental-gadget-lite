@@ -8,6 +8,7 @@
 #include "log.h"
 
 #define FILE_READ "r"
+#define FILE_WRITE "w"
 
 struct WiFiConfig {
     String SSID;
@@ -31,5 +32,7 @@ struct Config {
 };
 
 bool loadConfiguration(Config &config);
+void writeConfiguration(const Config &config, JsonDocument &output);
+bool saveConfiguration(const Config &config);
 
 #endif
