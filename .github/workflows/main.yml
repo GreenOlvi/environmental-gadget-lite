@@ -32,10 +32,16 @@ jobs:
         pip install --upgrade platformio
 
     - name: Run PlatformIO build
-      run: pio run -e d1_mini
+      run: pio run -e no-ntp -e ntp
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v3.1.0
       with:
-        name: firmware.bin
-        path: .pio/build/d1_mini/firmware.bin
+        name: firmware.no-ntp.bin
+        path: .pio/build/no-ntp/firmware.bin
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3.1.0
+      with:
+        name: firmware.ntp.bin
+        path: .pio/build/ntp/firmware.bin
