@@ -1,11 +1,27 @@
-#define VERSION_PREFIX "1.0.0"
+#define VERSION_PREFIX "1.1.0"
 
-#ifdef DEBUG
-#define VERSION_SUFFIX "-debug"
-#undef OTA_ENABLED
+#if DEBUG
+#define VERSION_SUFFIX "-alpha"
+#define OTA_ENABLED 1
+#define MOCK_SENSOR 1
 #else
 #define VERSION_SUFFIX
-#define OTA_ENABLED
+#define OTA_ENABLED 1
+#define MOCK_SENSOR 0
+#endif
+
+#ifndef USE_NTP
+#define USE_NTP 0
+#endif
+
+#ifndef BUILD_TIME
+#define BUILD_TIME 0
+#endif
+
+#if DEBUG
+#define SLEEPTIME 10e6
+#else
+#define SLEEPTIME 60e6
 #endif
 
 #include <Arduino.h>
@@ -20,12 +36,6 @@
 #include "SensorsModule.h"
 #include "Ota.h"
 #include "SensorData.h"
-
-#ifdef DEBUG
-#define SLEEPTIME 10e6
-#else
-#define SLEEPTIME 60e6
-#endif
 
 const char *version_tag = VERSION_PREFIX VERSION_SUFFIX;
 
@@ -51,8 +61,6 @@ Config config;
 
 char devName[10];
 MqttClient *mqtt;
-DataModule dataModule;
-SensorsModule sensors(&dataModule);
 
 void getDeviceName(char* name) {
   auto mac = WiFi.macAddress();
@@ -86,7 +94,7 @@ bool tryReadWifiSettings() {
       dns = IPAddress(dns);
     }
   }
-  log("RTC data valid: %s\n", rtcValid ? "true" : "false");
+  log("RTC data valid: %s", rtcValid ? "true" : "false");
   return rtcValid;
 }
 
@@ -153,7 +161,7 @@ void wifiConnectBlocking() {
   saveWifiSettings();
 }
 
-void publishAllData() {
+void publishAllData(const DataModule &dataModule) {
   auto data = SensorData();
   data.deviceName = devName;
   data.version = version_tag;
@@ -171,13 +179,14 @@ void publishAllData() {
 }
 
 void setup() {
-#ifdef DEBUG
-  Serial.begin(76800);
-#endif
-
   getDeviceName(devName);
 
-  log("Device '%s'", devName);
+  Serial.begin(76800);
+  Serial.printf("Device '%s', version '%s'\n", devName, version_tag);
+  delay(100);
+#if !DEBUG
+  Serial.end();
+#endif
 
   if (!LittleFS.begin())
   {
@@ -189,31 +198,52 @@ void setup() {
     log("Could not load config");
   }
 
-  log("Running version '%s'", version_tag);
-
   wifiSetup();
 
+  DataModule dataModule;
   dataModule.setup();
 
+#if MOCK_SENSOR
+  dataModule.setTemp(23.45);
+  dataModule.setHumidity(54.32);
+#else
+  SensorsModule sensors(&dataModule);
   sensors.setup();
   sensors.takeMeasurements();
+#endif
 
   wifiConnectBlocking();
   mqtt = new MqttClient(devName, config.Mqtt.Host.c_str(), config.Mqtt.Port);
 
+#if USE_NTP
+#if DEBUG
+  auto beforeTime = millis();
+#endif
+  setClock(config.NtpServer.c_str());
+#if DEBUG
+  auto setClockTime = millis() - beforeTime;
+  log("SetClock took %lu millis", setClockTime);
+#endif
+#endif
+
   mqtt->setup();
   if (mqtt->connect()) {
     log("Sending data");
-    publishAllData();
+    publishAllData(dataModule);
     mqtt->disconnect();
   } else {
     log("Mqtt failed, rc=%d\n", mqtt->state());
   }
 
-#ifdef OTA_ENABLED
-  Ota ota(config.Ota.Url.c_str(), config.Ota.CertFingerprint.c_str(), version_tag);
+#if OTA_ENABLED
+  Ota ota(config.Ota.Url.c_str(), version_tag);
   ota.setup();
-  ota.update(millis());
+
+#if !USE_NTP
+  ota.setX509Time(BUILD_TIME);
+#endif
+
+  ota.update();
 #endif
 
   log("Millis = %lu\n", millis());

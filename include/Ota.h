@@ -2,21 +2,23 @@
 #define Ota_h
 
 #include "ESP8266httpUpdate.h"
-
+#include "LittleFS.h"
 #include "log.h"
-#include "Module.h"
 
-class Ota : public Module {
+class Ota {
     public:
-        Ota(const char *url, const char *fingerprint, const char *version_tag);
-        void setup(void) override;
-        void update(const unsigned long) override;
+        Ota(const char *url, const char *version_tag);
+        void setup(void);
+        void update();
+        void setX509Time(const long time);
     private:
         const String *_url;
-        const char *_fingerprint;
         const char *_version_tag;
+        BearSSL::CertStore *_certStore;
         WiFiClient *_wifi;
         ESP8266HTTPUpdate *_client;
+        bool _setX509Time = false;
+        long _time = 0;
 };
 
 #endif

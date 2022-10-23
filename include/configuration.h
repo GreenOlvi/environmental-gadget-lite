@@ -21,13 +21,13 @@ struct MqttConfig {
 
 struct OtaConfig {
     String Url;
-    String CertFingerprint;
 };
 
 struct Config {
     WiFiConfig WiFi;
     MqttConfig Mqtt;
     OtaConfig Ota;
+    String NtpServer;
 };
 
 bool loadConfiguration(Config &config);

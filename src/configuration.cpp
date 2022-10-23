@@ -21,15 +21,15 @@ void readMqttConfig(const JsonObject &doc, MqttConfig &config) {
 void readOtaConfig(const JsonObject &doc, OtaConfig &config) {
     config.Url = doc["Url"].as<String>();
     log("Ota.Url=%s", config.Url.c_str());
-
-    config.CertFingerprint = doc["CertFingerprint"].as<String>();
-    log("Ota.CertFingerprint=%s", config.CertFingerprint.c_str());
 }
 
 void readConfig(const JsonObject &doc, Config &config) {
     readWiFiConfig(doc["WiFi"].as<JsonObject>(), config.WiFi);
     readMqttConfig(doc["Mqtt"].as<JsonObject>(), config.Mqtt);
     readOtaConfig(doc["Ota"].as<JsonObject>(), config.Ota);
+
+    config.NtpServer = doc["NtpServer"].isNull();
+    log("NtpServer=%d", config.NtpServer);
 }
 
 bool loadConfiguration(Config &config) {
