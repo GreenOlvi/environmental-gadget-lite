@@ -3,9 +3,11 @@
 #if DEBUG
 #define VERSION_SUFFIX "-alpha"
 #define OTA_ENABLED 1
+#define MOCK_SENSOR 1
 #else
 #define VERSION_SUFFIX
 #define OTA_ENABLED 1
+#define MOCK_SENSOR 0
 #endif
 
 #ifndef USE_NTP
@@ -59,8 +61,6 @@ Config config;
 
 char devName[10];
 MqttClient *mqtt;
-DataModule dataModule;
-SensorsModule sensors(&dataModule);
 
 void getDeviceName(char* name) {
   auto mac = WiFi.macAddress();
@@ -161,7 +161,7 @@ void wifiConnectBlocking() {
   saveWifiSettings();
 }
 
-void publishAllData() {
+void publishAllData(const DataModule &dataModule) {
   auto data = SensorData();
   data.deviceName = devName;
   data.version = version_tag;
@@ -200,25 +200,36 @@ void setup() {
 
   wifiSetup();
 
+  DataModule dataModule;
   dataModule.setup();
 
+#if MOCK_SENSOR
+  dataModule.setTemp(23.45);
+  dataModule.setHumidity(54.32);
+#else
+  SensorsModule sensors(&dataModule);
   sensors.setup();
   sensors.takeMeasurements();
+#endif
 
   wifiConnectBlocking();
   mqtt = new MqttClient(devName, config.Mqtt.Host.c_str(), config.Mqtt.Port);
 
 #if USE_NTP
+#if DEBUG
   auto beforeTime = millis();
+#endif
   setClock(config.NtpServer.c_str());
+#if DEBUG
   auto setClockTime = millis() - beforeTime;
   log("SetClock took %lu millis", setClockTime);
+#endif
 #endif
 
   mqtt->setup();
   if (mqtt->connect()) {
     log("Sending data");
-    publishAllData();
+    publishAllData(dataModule);
     mqtt->disconnect();
   } else {
     log("Mqtt failed, rc=%d\n", mqtt->state());

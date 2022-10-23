@@ -8,7 +8,10 @@ Ota::Ota(const char *url, const char *version_tag)
 
 void Ota::setup(void) {
     log("Ota setup()");
-    int numCerts = _certStore->initCertStore(LittleFS, PSTR("/root-ca.idx"), PSTR("/root-ca.ar"));
+#if DEBUG
+    int numCerts = 
+#endif
+        _certStore->initCertStore(LittleFS, PSTR("/root-ca.idx"), PSTR("/root-ca.ar"));
     log("Initialized %d certs", numCerts);
 }
 
@@ -32,7 +35,10 @@ void Ota::update() {
         case HTTP_UPDATE_FAILED: {
                 log("Update failed");
                 char buf[100];
-                auto errNum = wifi->getLastSSLError(buf, 100);
+#if DEBUG
+                auto errNum =
+#endif
+                    wifi->getLastSSLError(buf, 100);
                 log("Error[%d]: '%s'", errNum, buf);
             }
             break;
