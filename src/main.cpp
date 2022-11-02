@@ -1,4 +1,4 @@
-#define VERSION_PREFIX "1.1.1"
+#define VERSION_PREFIX "1.1.2"
 
 #if DEBUG
 #define VERSION_SUFFIX "-debug"

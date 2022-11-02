@@ -28,8 +28,8 @@ void readConfig(const JsonObject &doc, Config &config) {
     readMqttConfig(doc["Mqtt"].as<JsonObject>(), config.Mqtt);
     readOtaConfig(doc["Ota"].as<JsonObject>(), config.Ota);
 
-    config.NtpServer = doc["NtpServer"].isNull();
-    log("NtpServer=%d", config.NtpServer);
+    config.NtpServer = doc["NtpServer"].as<String>();
+    log("NtpServer=%s", config.NtpServer.c_str());
 }
 
 bool loadConfiguration(Config &config) {
