@@ -1,7 +1,7 @@
-#define VERSION_PREFIX "1.1.0"
+#define VERSION_PREFIX "1.1.1"
 
 #if DEBUG
-#define VERSION_SUFFIX "-alpha"
+#define VERSION_SUFFIX "-debug"
 #define OTA_ENABLED 1
 #define MOCK_SENSOR 1
 #else
@@ -165,7 +165,11 @@ void publishAllData(const DataModule &dataModule) {
   auto data = SensorData();
   data.deviceName = devName;
   data.version = version_tag;
+  data.ip = WiFi.localIP();
+  data.mac = WiFi.macAddress();
   data.connectionTime = millis();
+  data.rssi = WiFi.RSSI();
+
   data.temperatureIn = dataModule.getTemp();
   data.humidityIn = dataModule.getHumidity();
 
