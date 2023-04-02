@@ -37,13 +37,13 @@ jobs:
       run: pio run -e no-ntp -e ntp
 
     - name: Upload build artifact
-      uses: actions/upload-artifact@v3.1.0
+      uses: actions/upload-artifact@v3.1.2
       with:
         name: firmware.no-ntp.bin
         path: .pio/build/no-ntp/firmware.bin
 
     - name: Upload build artifact
-      uses: actions/upload-artifact@v3.1.0
+      uses: actions/upload-artifact@v3.1.2
       with:
         name: firmware.ntp.bin
         path: .pio/build/ntp/firmware.bin
