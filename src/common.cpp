@@ -31,8 +31,8 @@ float roundTwoDigits(float value)
     return (float)val / 100;
 }
 
-void setClock(const char *ntpServer) {
-    configTime(TZ_Europe_Warsaw, ntpServer);
+void setClockFromNtp(const char *ntpServer) {
+    configTime(TIMEZONE, ntpServer);
 
     log("%s", "Waiting for NTP time sync");
     time_t now = time(nullptr);
@@ -40,8 +40,4 @@ void setClock(const char *ntpServer) {
         delay(250);
         now = time(nullptr);
     }
-
-    struct tm timeinfo;
-    gmtime_r(&now, &timeinfo);
-    log("Current time: %s", asctime(&timeinfo));
 }

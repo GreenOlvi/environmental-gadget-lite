@@ -1,4 +1,4 @@
-#define VERSION_PREFIX "1.1.2"
+#define VERSION_PREFIX "1.1.3"
 
 #if DEBUG
 #define VERSION_SUFFIX "-debug"
@@ -12,6 +12,10 @@
 
 #ifndef USE_NTP
 #define USE_NTP 0
+#endif
+
+#ifndef USE_RTC
+#define USE_RTC 0
 #endif
 
 #ifndef BUILD_TIME
@@ -36,6 +40,10 @@
 #include "SensorsModule.h"
 #include "Ota.h"
 #include "SensorData.h"
+
+#if USE_RTC
+  #include "Rtc.h"
+#endif
 
 const char *version_tag = VERSION_PREFIX VERSION_SUFFIX;
 
@@ -217,19 +225,35 @@ void setup() {
 #endif
 
   wifiConnectBlocking();
-  mqtt = new MqttClient(devName, config.Mqtt.Host.c_str(), config.Mqtt.Port);
 
 #if USE_NTP
 #if DEBUG
   auto beforeTime = millis();
 #endif
-  setClock(config.NtpServer.c_str());
+
+#if USE_RTC
+  auto rtc = new RtcModule();
+  rtc->setupRtcClock(config.NtpServer.c_str());
+  free(rtc);
+#else
+  setClockFromNtp(config.NtpServer.c_str());
+#endif
+
 #if DEBUG
   auto setClockTime = millis() - beforeTime;
   log("SetClock took %lu millis", setClockTime);
 #endif
+
 #endif
 
+#if DEBUG
+  time_t now = time(nullptr);
+  struct tm timeinfo;
+  gmtime_r(&now, &timeinfo);
+  log("Current UTC time: %s", asctime(&timeinfo));
+#endif
+
+  mqtt = new MqttClient(devName, config.Mqtt.Host.c_str(), config.Mqtt.Port);
   mqtt->setup();
   if (mqtt->connect()) {
     log("Sending data");
