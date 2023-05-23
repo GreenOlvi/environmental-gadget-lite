@@ -42,6 +42,7 @@
 #include "configuration.h"
 #include "log.h"
 #include "common.h"
+#include "PersistentStorage.h"
 #include "Mqtt.h"
 #include "SensorsModule.h"
 #include "Ota.h"
@@ -53,23 +54,10 @@
 
 const char *version_tag = VERSION_PREFIX VERSION_SUFFIX;
 
-struct RtcData {
-  uint32_t crc32;
-  uint8_t channel;
-  uint8_t ap_mac[6];
-  uint32_t ip;
-  uint32_t gateway;
-  uint32_t subnet;
-  uint32_t dns;
-  uint8_t padding;
-};
-
-RtcData rtcData;
-
-IPAddress ip;
-IPAddress gateway;
-IPAddress subnet;
-IPAddress dns;
+// IPAddress ip;
+// IPAddress gateway;
+// IPAddress subnet;
+// IPAddress dns;
 
 Config config;
 
@@ -96,31 +84,14 @@ void wifiSetup() {
   log("Wifi off");
 }
 
-bool tryReadWifiSettings() {
-  bool rtcValid = false;
-  if (ESP.rtcUserMemoryRead(0, (uint32_t*)&rtcData, sizeof(rtcData))) {
-    uint32_t crc = calculateCRC32(((uint8_t*)&rtcData) + 4, sizeof(rtcData) - 4);
-    rtcValid = crc == rtcData.crc32;
-    if (rtcValid) {
-      ip = IPAddress(rtcData.ip);
-      gateway = IPAddress(rtcData.gateway);
-      subnet = IPAddress(rtcData.subnet);
-      dns = IPAddress(dns);
-    }
-  }
-  log("RTC data valid: %s", rtcValid ? "true" : "false");
-  return rtcValid;
-}
-
 void saveWifiSettings() {
-  rtcData.channel = WiFi.channel();
-  rtcData.ip = ip;
-  rtcData.gateway = gateway;
-  rtcData.subnet = subnet;
-  rtcData.dns = dns;
-  memcpy(rtcData.ap_mac, WiFi.BSSID(), 6);
-  rtcData.crc32 = calculateCRC32(((uint8_t *)&rtcData) + 4, sizeof(rtcData) - 4);
-  ESP.rtcUserMemoryWrite(0, (uint32_t *)&rtcData, sizeof(rtcData));
+  Storage.Channel(WiFi.channel());
+  Storage.Ip(WiFi.localIP());
+  Storage.Gateway(WiFi.gatewayIP());
+  Storage.Subnet(WiFi.subnetMask());
+  Storage.Dns(WiFi.dnsIP());
+  Storage.ApMac(WiFi.BSSID());
+  Storage.Save();
 }
 
 bool wifiConnectBlocking() {
@@ -130,14 +101,11 @@ bool wifiConnectBlocking() {
 
   log("Start wifi");
 
-  WiFi.mode(WIFI_STA);
-  if (ip) {
-    WiFi.config(ip, gateway, subnet, dns);
-  }
-
   auto updateSettings = false;
-  if (tryReadWifiSettings()) {
-    WiFi.begin(config.WiFi.SSID, config.WiFi.Password, rtcData.channel, rtcData.ap_mac, true);
+  WiFi.mode(WIFI_STA);
+  if (Storage.IsValid()) {
+    WiFi.config(Storage.Ip(), Storage.Gateway(), Storage.Subnet(), Storage.Dns());
+    WiFi.begin(config.WiFi.SSID, config.WiFi.Password, Storage.Channel(), Storage.ApMac(), true);
   } else {
     WiFi.begin(config.WiFi.SSID, config.WiFi.Password);
     updateSettings = true;
@@ -171,8 +139,7 @@ bool wifiConnectBlocking() {
 
   MDNS.begin(devName);
 
-  log("Wifi connected");
-  log("IP address: %s", WiFi.localIP().toString().c_str());
+  log("Wifi connected after %d loops", retries);
 
   if (updateSettings) {
     saveWifiSettings();
