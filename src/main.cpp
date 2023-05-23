@@ -117,7 +117,7 @@ void saveWifiSettings() {
   ESP.rtcUserMemoryWrite(0, (uint32_t *)&rtcData, sizeof(rtcData));
 }
 
-void wifiConnectBlocking() {
+bool wifiConnectBlocking() {
   WiFi.forceSleepWake();
   delay(1);
   WiFi.persistent(false);
@@ -129,10 +129,12 @@ void wifiConnectBlocking() {
     WiFi.config(ip, gateway, subnet, dns);
   }
 
+  auto updateSettings = false;
   if (tryReadWifiSettings()) {
     WiFi.begin(config.WiFi.SSID, config.WiFi.Password, rtcData.channel, rtcData.ap_mac, true);
   } else {
     WiFi.begin(config.WiFi.SSID, config.WiFi.Password);
+    updateSettings = true;
   }
 
   int retries = 0;
@@ -147,14 +149,14 @@ void wifiConnectBlocking() {
       WiFi.forceSleepWake();
       delay(10);
       WiFi.begin(config.WiFi.SSID, config.WiFi.Password);
+      updateSettings = true;
     }
 
     if (retries == 600) {
       WiFi.disconnect(true);
       delay(1);
       WiFi.mode(WIFI_OFF);
-      ESP.deepSleep(SLEEPTIME, WAKE_RF_DISABLED);
-      return;
+      return false;
     }
 
     delay(50);
@@ -166,7 +168,10 @@ void wifiConnectBlocking() {
   log("Wifi connected");
   log("IP address: %s", WiFi.localIP().toString().c_str());
 
-  saveWifiSettings();
+  if (updateSettings) {
+    saveWifiSettings();
+  }
+  return true;
 }
 
 void publishAllData(const DataModule &dataModule) {
@@ -224,7 +229,10 @@ void setup() {
   sensors.takeMeasurements();
 #endif
 
-  wifiConnectBlocking();
+  if (!wifiConnectBlocking()) {
+    // No wifi - go to sleep
+    ESP.deepSleep(SLEEPTIME, WAKE_RF_DISABLED);
+  }
 
 #if USE_NTP
 #if DEBUG
