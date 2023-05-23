@@ -30,14 +30,3 @@ float roundTwoDigits(float value)
     float val = (int)(value * 100 + .5);
     return (float)val / 100;
 }
-
-void setClockFromNtp(const char *ntpServer) {
-    configTime(TIMEZONE, ntpServer);
-
-    log("%s", "Waiting for NTP time sync");
-    time_t now = time(nullptr);
-    while (now < 8 * 3600 * 2) {
-        delay(250);
-        now = time(nullptr);
-    }
-}

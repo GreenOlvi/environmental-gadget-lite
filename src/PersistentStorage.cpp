@@ -123,7 +123,7 @@ void PersistentStorage::ApMac(uint8_t* value)
 
 void PersistentStorage::PrintDebug()
 {
-    log("persistent storage (%d bytes)", sizeof(RtcData));
+    log("persistent storage (%zu bytes)", sizeof(RtcData));
     log("CRC32=%04X", _data.crc32);
     log("Channel=%d", _data.channel);
     log("AP MAC=%02X:%02X:%02X:%02X:%02X:%02X", _data.ap_mac[0], _data.ap_mac[1], _data.ap_mac[2], _data.ap_mac[3], _data.ap_mac[4], _data.ap_mac[5]);

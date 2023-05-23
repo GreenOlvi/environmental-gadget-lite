@@ -48,16 +48,11 @@
 #include "Ota.h"
 #include "SensorData.h"
 
-#if USE_RTC
+#if USE_REAL_TIME
   #include "Rtc.h"
 #endif
 
 const char *version_tag = VERSION_PREFIX VERSION_SUFFIX;
-
-// IPAddress ip;
-// IPAddress gateway;
-// IPAddress subnet;
-// IPAddress dns;
 
 Config config;
 
@@ -202,6 +197,16 @@ void setup() {
   sensors.takeMeasurements();
 #endif
 
+#if USE_REAL_TIME
+  auto rtc = new RtcModule();
+#if USE_RTC
+  bool clockSet = false;
+  if (rtc->trySetClockFromRtc()) {
+    clockSet = true;
+  }
+#endif
+#endif
+
   if (!wifiConnectBlocking()) {
     // No wifi - go to sleep
     ESP.deepSleep(SLEEPTIME, WAKE_RF_DISABLED);
@@ -213,12 +218,13 @@ void setup() {
 #endif
 
 #if USE_RTC
-  auto rtc = new RtcModule();
-  rtc->setupRtcClock(config.NtpServer.c_str());
-  delete rtc;
+  if (!clockSet) {
+    rtc->setRtcAndClockFromNtp(config.NtpServer.c_str());
+  }
 #else
-  setClockFromNtp(config.NtpServer.c_str());
+  rtc->setClockFromNtp(config.NtpServer.c_str());
 #endif
+  delete rtc;
 
 #if DEBUG
   auto setClockTime = millis() - beforeTime;

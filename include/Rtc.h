@@ -8,12 +8,13 @@
 
 class RtcModule {
     public:
-        RtcModule();
-        ~RtcModule();
-        void setupRtcClock(const char *ntpServer);
+        RtcModule(void);
+        ~RtcModule(void);
+        bool trySetClockFromRtc(void);
+        void setClockFromNtp(const char *ntpServer);
+        void setRtcAndClockFromNtp(const char *ntpServer);
 
     private:
-        void setRtcTimeFromNtp(const char *ntpServer);
         void setClockFromRtc(void);
         RtcDS3231<TwoWire>* _rtc;
 };

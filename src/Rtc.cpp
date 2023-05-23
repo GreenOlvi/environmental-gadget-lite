@@ -7,14 +7,14 @@ RtcModule::~RtcModule() {
     delete _rtc;
 }
 
-void RtcModule::setupRtcClock(const char *ntpServer)
-{
+bool RtcModule::trySetClockFromRtc() {
     _rtc->Begin();
 
     if (!_rtc->GetIsRunning())
     {
         log("RTC was not running, starting now");
         _rtc->SetIsRunning(true);
+        return false;
     }
 
     if (!_rtc->IsDateTimeValid())
@@ -23,21 +23,30 @@ void RtcModule::setupRtcClock(const char *ntpServer)
         if (!error)
         {
             log("Rtc lost confidence in the datetime");
-            setRtcTimeFromNtp(ntpServer);
         }
         else
         {
             log("RTC error: %d", error);
         }
+        return false;
     }
-    else
-    {
-        log("No error");
-        setClockFromRtc();
+
+    setClockFromRtc();
+    return true;
+}
+
+void RtcModule::setClockFromNtp(const char *ntpServer) {
+    configTime(TIMEZONE, ntpServer);
+
+    log("%s", "Waiting for NTP time sync");
+    time_t now = time(nullptr);
+    while (now < 8 * 3600 * 2) {
+        delay(250);
+        now = time(nullptr);
     }
 }
 
-void RtcModule::setRtcTimeFromNtp(const char *ntpServer) {
+void RtcModule::setRtcAndClockFromNtp(const char *ntpServer) {
     setClockFromNtp(ntpServer);
 
     time_t now = time(nullptr);
