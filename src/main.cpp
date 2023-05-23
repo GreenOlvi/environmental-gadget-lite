@@ -18,6 +18,12 @@
 #define USE_RTC 0
 #endif
 
+#if USE_NTP || USE_RTC
+#define USE_REAL_TIME 1
+#else
+#define USE_REAL_TIME 0
+#endif
+
 #ifndef BUILD_TIME
 #define BUILD_TIME 0
 #endif
@@ -234,7 +240,7 @@ void setup() {
     ESP.deepSleep(SLEEPTIME, WAKE_RF_DISABLED);
   }
 
-#if USE_NTP
+#if USE_REAL_TIME
 #if DEBUG
   auto beforeTime = millis();
 #endif
@@ -275,7 +281,7 @@ void setup() {
   Ota ota(config.Ota.Url.c_str(), version_tag);
   ota.setup();
 
-#if !USE_NTP
+#if !USE_REAL_TIME
   ota.setX509Time(BUILD_TIME);
 #endif
 

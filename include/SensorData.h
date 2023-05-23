@@ -30,6 +30,11 @@ void serializeData(SensorData &data, String &output) {
     doc["Mac"] = data.mac;
     doc["ConnectTime"] = data.connectionTime;
     doc["RSSI"] = data.rssi;
+#if USE_REAL_TIME
+    doc["Timestamp"] = (unsigned long)time(nullptr);
+#else
+    doc["Timestamp"] = nullptr;
+#endif
 
     serializeJson(doc, output);
 }
