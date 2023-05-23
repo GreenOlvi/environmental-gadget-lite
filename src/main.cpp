@@ -234,7 +234,7 @@ void setup() {
 #if USE_RTC
   auto rtc = new RtcModule();
   rtc->setupRtcClock(config.NtpServer.c_str());
-  free(rtc);
+  delete rtc;
 #else
   setClockFromNtp(config.NtpServer.c_str());
 #endif

@@ -9,6 +9,7 @@
 class RtcModule {
     public:
         RtcModule();
+        ~RtcModule();
         void setupRtcClock(const char *ntpServer);
 
     private:

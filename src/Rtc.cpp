@@ -3,6 +3,10 @@
 RtcModule::RtcModule() : _rtc(new RtcDS3231<TwoWire>(Wire)) {
 }
 
+RtcModule::~RtcModule() {
+    delete _rtc;
+}
+
 void RtcModule::setupRtcClock(const char *ntpServer)
 {
     _rtc->Begin();
