@@ -16,6 +16,7 @@ bool PersistentStorage::Load()
     }
     _isLoaded = true;
     log("RTC data valid: %s", _isValid ? "true" : "false");
+    PrintDebug();
     return _isValid;
 }
 
@@ -121,8 +122,23 @@ void PersistentStorage::ApMac(uint8_t* value)
     }
 }
 
+unsigned long PersistentStorage::LastRtcSync()
+{
+    return _data.lastRtcSync;
+}
+
+void PersistentStorage::LastRtcSync(unsigned long value)
+{
+    if (_data.lastRtcSync != value)
+    {
+        _data.lastRtcSync = value;
+        _changed = true;
+    }
+}
+
 void PersistentStorage::PrintDebug()
 {
+#if DEBUG
     log("persistent storage (%zu bytes)", sizeof(RtcData));
     log("CRC32=%04X", _data.crc32);
     log("Channel=%d", _data.channel);
@@ -131,4 +147,6 @@ void PersistentStorage::PrintDebug()
     log("Gateway=%s", IPAddress(_data.gateway).toString().c_str());
     log("Subnet=%s", IPAddress(_data.subnet).toString().c_str());
     log("DNS=%s", IPAddress(_data.dns).toString().c_str());
+    log("LastRtcSync=%lu", _data.lastRtcSync);
+#endif
 }

@@ -86,7 +86,6 @@ void saveWifiSettings() {
   Storage.Subnet(WiFi.subnetMask());
   Storage.Dns(WiFi.dnsIP());
   Storage.ApMac(WiFi.BSSID());
-  Storage.Save();
 }
 
 bool wifiConnectBlocking() {
@@ -266,6 +265,8 @@ void setup() {
 
   WiFi.disconnect(true);
   delay(1);
+  Storage.Save();
+
   ESP.deepSleep(SLEEPTIME, WAKE_RF_DISABLED);
 }
 

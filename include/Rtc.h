@@ -5,6 +5,9 @@
 #include <RtcDS3231.h>
 #include "log.h"
 #include "common.h"
+#include "PersistentStorage.h"
+
+#define RtcSyncIntervalInSeconds (60*60*24*7) // once a week
 
 class RtcModule {
     public:
@@ -16,6 +19,8 @@ class RtcModule {
 
     private:
         void setClockFromRtc(void);
+        bool isRtcDataValid(void);
+        bool isSyncNeeded(void);
         RtcDS3231<TwoWire>* _rtc;
 };
 

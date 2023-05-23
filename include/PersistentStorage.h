@@ -14,7 +14,7 @@ struct RtcData
     uint32_t gateway;
     uint32_t subnet;
     uint32_t dns;
-    uint8_t padding;
+    unsigned long lastRtcSync;
 };
 
 class PersistentStorage
@@ -44,6 +44,9 @@ class PersistentStorage
 
         const uint8_t* ApMac(void);
         void ApMac(uint8_t* value);
+
+        unsigned long LastRtcSync(void);
+        void LastRtcSync(unsigned long value);
 
         void PrintDebug(void);
 
