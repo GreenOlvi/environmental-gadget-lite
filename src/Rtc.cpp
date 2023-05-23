@@ -50,7 +50,7 @@ void RtcModule::setRtcTimeFromNtp(const char *ntpServer) {
 
 void RtcModule::setClockFromRtc(void) {
     log("Set time from RTC");
-    setTZ(TIMEZONE);
+    setTZ(TZ_Etc_UTC);
     auto dt = _rtc->GetDateTime();
     struct tm t = {0};
     t.tm_year = dt.Year() - 1900;
@@ -62,6 +62,7 @@ void RtcModule::setClockFromRtc(void) {
     time_t time = mktime(&t);
     timeval tv = { time, 0 };
     settimeofday(&tv, nullptr);
+    setTZ(TIMEZONE);
 }
 
 void printDateTime(const RtcDateTime& dt)
