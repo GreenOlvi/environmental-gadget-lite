@@ -49,3 +49,5 @@ tags
 
 data/
 /tmp
+
+include/secrets.h

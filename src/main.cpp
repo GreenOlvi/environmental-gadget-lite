@@ -1,4 +1,4 @@
-#define VERSION_PREFIX "1.1.2"
+#define VERSION_PREFIX "1.1.3"
 
 #if DEBUG
 #define VERSION_SUFFIX "-debug"
@@ -12,6 +12,16 @@
 
 #ifndef USE_NTP
 #define USE_NTP 0
+#endif
+
+#ifndef USE_RTC
+#define USE_RTC 0
+#endif
+
+#if USE_NTP || USE_RTC
+#define USE_REAL_TIME 1
+#else
+#define USE_REAL_TIME 0
 #endif
 
 #ifndef BUILD_TIME
@@ -32,30 +42,17 @@
 #include "configuration.h"
 #include "log.h"
 #include "common.h"
+#include "PersistentStorage.h"
 #include "Mqtt.h"
 #include "SensorsModule.h"
 #include "Ota.h"
 #include "SensorData.h"
 
+#if USE_REAL_TIME
+  #include "Rtc.h"
+#endif
+
 const char *version_tag = VERSION_PREFIX VERSION_SUFFIX;
-
-struct RtcData {
-  uint32_t crc32;
-  uint8_t channel;
-  uint8_t ap_mac[6];
-  uint32_t ip;
-  uint32_t gateway;
-  uint32_t subnet;
-  uint32_t dns;
-  uint8_t padding;
-};
-
-RtcData rtcData;
-
-IPAddress ip;
-IPAddress gateway;
-IPAddress subnet;
-IPAddress dns;
 
 Config config;
 
@@ -82,49 +79,30 @@ void wifiSetup() {
   log("Wifi off");
 }
 
-bool tryReadWifiSettings() {
-  bool rtcValid = false;
-  if (ESP.rtcUserMemoryRead(0, (uint32_t*)&rtcData, sizeof(rtcData))) {
-    uint32_t crc = calculateCRC32(((uint8_t*)&rtcData) + 4, sizeof(rtcData) - 4);
-    rtcValid = crc == rtcData.crc32;
-    if (rtcValid) {
-      ip = IPAddress(rtcData.ip);
-      gateway = IPAddress(rtcData.gateway);
-      subnet = IPAddress(rtcData.subnet);
-      dns = IPAddress(dns);
-    }
-  }
-  log("RTC data valid: %s", rtcValid ? "true" : "false");
-  return rtcValid;
-}
-
 void saveWifiSettings() {
-  rtcData.channel = WiFi.channel();
-  rtcData.ip = ip;
-  rtcData.gateway = gateway;
-  rtcData.subnet = subnet;
-  rtcData.dns = dns;
-  memcpy(rtcData.ap_mac, WiFi.BSSID(), 6);
-  rtcData.crc32 = calculateCRC32(((uint8_t *)&rtcData) + 4, sizeof(rtcData) - 4);
-  ESP.rtcUserMemoryWrite(0, (uint32_t *)&rtcData, sizeof(rtcData));
+  Storage.Channel(WiFi.channel());
+  Storage.Ip(WiFi.localIP());
+  Storage.Gateway(WiFi.gatewayIP());
+  Storage.Subnet(WiFi.subnetMask());
+  Storage.Dns(WiFi.dnsIP());
+  Storage.ApMac(WiFi.BSSID());
 }
 
-void wifiConnectBlocking() {
+bool wifiConnectBlocking() {
   WiFi.forceSleepWake();
   delay(1);
   WiFi.persistent(false);
 
   log("Start wifi");
 
+  auto updateSettings = false;
   WiFi.mode(WIFI_STA);
-  if (ip) {
-    WiFi.config(ip, gateway, subnet, dns);
-  }
-
-  if (tryReadWifiSettings()) {
-    WiFi.begin(config.WiFi.SSID, config.WiFi.Password, rtcData.channel, rtcData.ap_mac, true);
+  if (Storage.IsValid()) {
+    WiFi.config(Storage.Ip(), Storage.Gateway(), Storage.Subnet(), Storage.Dns());
+    WiFi.begin(config.WiFi.SSID, config.WiFi.Password, Storage.Channel(), Storage.ApMac(), true);
   } else {
     WiFi.begin(config.WiFi.SSID, config.WiFi.Password);
+    updateSettings = true;
   }
 
   int retries = 0;
@@ -139,14 +117,14 @@ void wifiConnectBlocking() {
       WiFi.forceSleepWake();
       delay(10);
       WiFi.begin(config.WiFi.SSID, config.WiFi.Password);
+      updateSettings = true;
     }
 
     if (retries == 600) {
       WiFi.disconnect(true);
       delay(1);
       WiFi.mode(WIFI_OFF);
-      ESP.deepSleep(SLEEPTIME, WAKE_RF_DISABLED);
-      return;
+      return false;
     }
 
     delay(50);
@@ -155,10 +133,12 @@ void wifiConnectBlocking() {
 
   MDNS.begin(devName);
 
-  log("Wifi connected");
-  log("IP address: %s", WiFi.localIP().toString().c_str());
+  log("Wifi connected after %d loops", retries);
 
-  saveWifiSettings();
+  if (updateSettings) {
+    saveWifiSettings();
+  }
+  return true;
 }
 
 void publishAllData(const DataModule &dataModule) {
@@ -216,20 +196,50 @@ void setup() {
   sensors.takeMeasurements();
 #endif
 
-  wifiConnectBlocking();
-  mqtt = new MqttClient(devName, config.Mqtt.Host.c_str(), config.Mqtt.Port);
+#if USE_REAL_TIME
+  auto rtc = new RtcModule();
+#if USE_RTC
+  bool clockSet = false;
+  if (rtc->trySetClockFromRtc()) {
+    clockSet = true;
+  }
+#endif
+#endif
 
-#if USE_NTP
+  if (!wifiConnectBlocking()) {
+    // No wifi - go to sleep
+    ESP.deepSleep(SLEEPTIME, WAKE_RF_DISABLED);
+  }
+
+#if USE_REAL_TIME
 #if DEBUG
   auto beforeTime = millis();
 #endif
-  setClock(config.NtpServer.c_str());
+
+#if USE_RTC
+  if (!clockSet) {
+    rtc->setRtcAndClockFromNtp(config.NtpServer.c_str());
+  }
+#else
+  rtc->setClockFromNtp(config.NtpServer.c_str());
+#endif
+  delete rtc;
+
 #if DEBUG
   auto setClockTime = millis() - beforeTime;
   log("SetClock took %lu millis", setClockTime);
 #endif
+
 #endif
 
+#if DEBUG
+  time_t now = time(nullptr);
+  struct tm timeinfo;
+  gmtime_r(&now, &timeinfo);
+  log("Current UTC time: %s", asctime(&timeinfo));
+#endif
+
+  mqtt = new MqttClient(devName, config.Mqtt.Host.c_str(), config.Mqtt.Port);
   mqtt->setup();
   if (mqtt->connect()) {
     log("Sending data");
@@ -243,7 +253,7 @@ void setup() {
   Ota ota(config.Ota.Url.c_str(), version_tag);
   ota.setup();
 
-#if !USE_NTP
+#if !USE_REAL_TIME
   ota.setX509Time(BUILD_TIME);
 #endif
 
@@ -255,6 +265,8 @@ void setup() {
 
   WiFi.disconnect(true);
   delay(1);
+  Storage.Save();
+
   ESP.deepSleep(SLEEPTIME, WAKE_RF_DISABLED);
 }
 

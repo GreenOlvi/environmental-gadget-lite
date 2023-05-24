@@ -34,7 +34,7 @@ jobs:
         pip install --upgrade platformio
 
     - name: Run PlatformIO build
-      run: pio run -e no-ntp -e ntp
+      run: pio run -e no-ntp -e ntp -e ntp-rtc
 
     - name: Upload build artifact
       uses: actions/upload-artifact@v3.1.2
@@ -47,3 +47,9 @@ jobs:
       with:
         name: firmware.ntp.bin
         path: .pio/build/ntp/firmware.bin
+
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: firmware.ntp-rtc.bin
+        path: .pio/build/ntp-rtc/firmware.bin
