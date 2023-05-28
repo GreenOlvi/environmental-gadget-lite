@@ -10,8 +10,8 @@
 
 #define TIMEZONE TZ_Europe_Warsaw
 
-uint32_t calculateCRC32(const uint8_t *data, size_t length);
+uint32_t calculateCRC32(const uint8_t* data, size_t length);
 float roundTwoDigits(float value);
-void setClockFromNtp(const char *ntpServer);
+void setClockFromNtp(const char* ntpServer);
 
 #endif

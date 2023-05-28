@@ -1,6 +1,6 @@
 #include "SensorsModule.h"
 
-SensorsModule::SensorsModule(DataModule *dataModule)
+SensorsModule::SensorsModule(DataModule* dataModule)
     : _data(dataModule), _dht() {
 }
 

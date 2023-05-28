@@ -72,7 +72,7 @@ bool RtcModule::isSyncNeeded()
     return false;
 }
 
-void RtcModule::setClockFromNtp(const char *ntpServer)
+void RtcModule::setClockFromNtp(const char* ntpServer)
 {
     configTime(TIMEZONE, ntpServer);
 
@@ -85,7 +85,7 @@ void RtcModule::setClockFromNtp(const char *ntpServer)
     }
 }
 
-void RtcModule::setRtcAndClockFromNtp(const char *ntpServer)
+void RtcModule::setRtcAndClockFromNtp(const char* ntpServer)
 {
     setClockFromNtp(ntpServer);
 
@@ -104,7 +104,7 @@ void RtcModule::setClockFromRtc(void)
     log("Set time from RTC");
     setTZ(TZ_Etc_UTC);
     auto dt = _rtc->GetDateTime();
-    struct tm t = {0};
+    struct tm t = { 0 };
     t.tm_year = dt.Year() - 1900;
     t.tm_mon = dt.Month() - 1;
     t.tm_mday = dt.Day();
@@ -112,12 +112,12 @@ void RtcModule::setClockFromRtc(void)
     t.tm_min = dt.Minute();
     t.tm_sec = dt.Second();
     time_t time = mktime(&t);
-    timeval tv = {time, 0};
+    timeval tv = { time, 0 };
     settimeofday(&tv, nullptr);
     setTZ(TIMEZONE);
 }
 
-void printDateTime(const RtcDateTime &dt)
+void printDateTime(const RtcDateTime& dt)
 {
     char datestring[20];
 

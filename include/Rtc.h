@@ -14,8 +14,8 @@ class RtcModule {
         RtcModule(void);
         ~RtcModule(void);
         bool trySetClockFromRtc(void);
-        void setClockFromNtp(const char *ntpServer);
-        void setRtcAndClockFromNtp(const char *ntpServer);
+        void setClockFromNtp(const char* ntpServer);
+        void setRtcAndClockFromNtp(const char* ntpServer);
 
     private:
         void setClockFromRtc(void);

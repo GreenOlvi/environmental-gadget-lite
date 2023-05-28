@@ -18,7 +18,7 @@ struct SensorData
     int8_t rssi;
 };
 
-void serializeData(SensorData &data, String &output) {
+void serializeData(SensorData& data, String& output) {
     StaticJsonDocument<256> doc;
 
     doc["TempIn"] = data.temperatureIn;

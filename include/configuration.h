@@ -30,6 +30,6 @@ struct Config {
     String NtpServer;
 };
 
-bool loadConfiguration(Config &config);
+bool loadConfiguration(Config& config);
 
 #endif

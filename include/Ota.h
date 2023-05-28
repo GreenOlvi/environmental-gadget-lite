@@ -7,16 +7,16 @@
 
 class Ota {
     public:
-        Ota(const char *url, const char *version_tag);
+        Ota(const char* url, const char* version_tag);
         void setup(void);
         void update();
         void setX509Time(const long time);
     private:
-        const String *_url;
-        const char *_version_tag;
-        BearSSL::CertStore *_certStore;
-        WiFiClient *_wifi;
-        ESP8266HTTPUpdate *_client;
+        const String* _url;
+        const char* _version_tag;
+        BearSSL::CertStore* _certStore;
+        WiFiClient* _wifi;
+        ESP8266HTTPUpdate* _client;
         bool _setX509Time = false;
         long _time = 0;
 };
