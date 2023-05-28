@@ -9,9 +9,9 @@ PersistentStorage::PersistentStorage()
 bool PersistentStorage::Load()
 {
     _isValid = false;
-    if (ESP.rtcUserMemoryRead(0, (uint32_t *)&_data, sizeof(_data)))
+    if (ESP.rtcUserMemoryRead(0, (uint32_t*)&_data, sizeof(_data)))
     {
-        uint32_t crc = calculateCRC32(((uint8_t *)&_data) + 4, sizeof(_data) - 4);
+        uint32_t crc = calculateCRC32(((uint8_t*)&_data) + 4, sizeof(_data) - 4);
         _isValid = crc == _data.crc32;
     }
     _isLoaded = true;
@@ -22,8 +22,8 @@ bool PersistentStorage::Load()
 
 void PersistentStorage::Save()
 {
-  _data.crc32 = calculateCRC32(((uint8_t *)&_data) + 4, sizeof(_data) - 4);
-  ESP.rtcUserMemoryWrite(0, (uint32_t *)&_data, sizeof(_data));
+    _data.crc32 = calculateCRC32(((uint8_t*)&_data) + 4, sizeof(_data) - 4);
+    ESP.rtcUserMemoryWrite(0, (uint32_t*)&_data, sizeof(_data));
 }
 
 bool PersistentStorage::IsValid()

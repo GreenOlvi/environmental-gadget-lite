@@ -15,7 +15,7 @@ class DataModule : public Module {
 
         float getTemp() const;
         float getHumidity() const;
-    
+
     private:
         float _temp;
         float _humidity;

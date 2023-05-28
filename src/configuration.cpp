@@ -1,8 +1,8 @@
 #include "configuration.h"
 
-static const char *ConfigFile = "/config.json";
+static const char* ConfigFile = "/config.json";
 
-void readWiFiConfig(const JsonObject &doc, WiFiConfig &config) {
+void readWiFiConfig(const JsonObject& doc, WiFiConfig& config) {
     config.SSID = doc["SSID"].as<String>();
     log("WiFi.SSID=%s", config.SSID.c_str());
 
@@ -10,7 +10,7 @@ void readWiFiConfig(const JsonObject &doc, WiFiConfig &config) {
     log("WiFi.SSID=%s", config.Password.c_str());
 }
 
-void readMqttConfig(const JsonObject &doc, MqttConfig &config) {
+void readMqttConfig(const JsonObject& doc, MqttConfig& config) {
     config.Host = doc["Host"].as<String>();
     log("Mqtt.Host=%s", config.Host.c_str());
 
@@ -18,12 +18,12 @@ void readMqttConfig(const JsonObject &doc, MqttConfig &config) {
     log("Mqtt.Port=%d", config.Port);
 }
 
-void readOtaConfig(const JsonObject &doc, OtaConfig &config) {
+void readOtaConfig(const JsonObject& doc, OtaConfig& config) {
     config.Url = doc["Url"].as<String>();
     log("Ota.Url=%s", config.Url.c_str());
 }
 
-void readConfig(const JsonObject &doc, Config &config) {
+void readConfig(const JsonObject& doc, Config& config) {
     readWiFiConfig(doc["WiFi"].as<JsonObject>(), config.WiFi);
     readMqttConfig(doc["Mqtt"].as<JsonObject>(), config.Mqtt);
     readOtaConfig(doc["Ota"].as<JsonObject>(), config.Ota);
@@ -32,7 +32,7 @@ void readConfig(const JsonObject &doc, Config &config) {
     log("NtpServer=%s", config.NtpServer.c_str());
 }
 
-bool loadConfiguration(Config &config) {
+bool loadConfiguration(Config& config) {
     log("Loading config from '%s'", ConfigFile);
     auto file = LittleFS.open(ConfigFile, FILE_READ);
     if (!file) {
