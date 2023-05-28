@@ -22,8 +22,11 @@ bool PersistentStorage::Load()
 
 void PersistentStorage::Save()
 {
-    _data.crc32 = calculateCRC32(((uint8_t*)&_data) + 4, sizeof(_data) - 4);
-    ESP.rtcUserMemoryWrite(0, (uint32_t*)&_data, sizeof(_data));
+    if (_changed)
+    {
+        _data.crc32 = calculateCRC32(((uint8_t*)&_data) + 4, sizeof(_data) - 4);
+        ESP.rtcUserMemoryWrite(0, (uint32_t*)&_data, sizeof(_data));
+    }
 }
 
 bool PersistentStorage::IsValid()
