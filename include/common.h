@@ -8,6 +8,8 @@
 
 #define countof(a) (sizeof(a) / sizeof(a[0]))
 
+#define MillisToMicros(i) (i * 10e3)
+
 #define TIMEZONE TZ_Europe_Warsaw
 
 uint32_t calculateCRC32(const uint8_t* data, size_t length);

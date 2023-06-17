@@ -1,4 +1,4 @@
-#define VERSION_PREFIX "1.1.3"
+#define VERSION_PREFIX "1.1.4"
 
 #ifndef DEBUG
 #define DEBUG 0
@@ -33,7 +33,7 @@
 #endif
 
 #if DEBUG
-#define SLEEPTIME 10e6
+#define SLEEPTIME 20e6
 #else
 #define SLEEPTIME 60e6
 #endif
@@ -174,6 +174,15 @@ void publishAllData(const DataModule &dataModule)
     mqtt->publish(topic, serialized.c_str());
 }
 
+unsigned long calculateSleepTime(const unsigned long sleepInterval, const unsigned long runningTime)
+{
+    auto sleep = sleepInterval - (runningTime % sleepInterval);
+#if DEBUG
+    log("Will be sleeping for %lu", sleep);
+#endif
+    return sleep;
+}
+
 void setup()
 {
     getDeviceName(devName);
@@ -286,7 +295,7 @@ void setup()
     WiFi.disconnect(true);
     delay(1);
 
-    ESP.deepSleep(SLEEPTIME, WAKE_RF_DISABLED);
+    ESP.deepSleep(calculateSleepTime(SLEEPTIME, MillisToMicros(millis())), WAKE_RF_DISABLED);
 }
 
 void loop()
