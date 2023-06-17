@@ -30,3 +30,28 @@ float roundTwoDigits(float value)
     float val = (int)(value * 100 + .5);
     return (float)val / 100;
 }
+
+void getDeviceName(char *name)
+{
+    auto mac = WiFi.macAddress();
+    strcpy(name, "ls-");
+    int nIndex = 3;
+    for (unsigned int i = 9; i < 17; i++)
+    {
+        char c = mac[i];
+        if (c != ':')
+        {
+            name[nIndex++] = tolower(c);
+        }
+    }
+    name[nIndex] = 0;
+}
+
+unsigned long calculateSleepTime(const unsigned long sleepInterval, const unsigned long runningTime)
+{
+    auto sleep = sleepInterval - (runningTime % sleepInterval);
+#if DEBUG
+    log("Will be sleeping for %lu", sleep);
+#endif
+    return sleep;
+}

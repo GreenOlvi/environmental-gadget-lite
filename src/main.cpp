@@ -63,22 +63,6 @@ Config config;
 char devName[10];
 MqttClient *mqtt;
 
-void getDeviceName(char *name)
-{
-    auto mac = WiFi.macAddress();
-    strcpy(name, "ls-");
-    int nIndex = 3;
-    for (unsigned int i = 9; i < 17; i++)
-    {
-        char c = mac[i];
-        if (c != ':')
-        {
-            name[nIndex++] = tolower(c);
-        }
-    }
-    name[nIndex] = 0;
-}
-
 void wifiSetup()
 {
     WiFi.mode(WIFI_OFF);
@@ -172,15 +156,6 @@ void publishAllData(const DataModule &dataModule)
     sprintf(topic, "env/%s/data", devName);
 
     mqtt->publish(topic, serialized.c_str());
-}
-
-unsigned long calculateSleepTime(const unsigned long sleepInterval, const unsigned long runningTime)
-{
-    auto sleep = sleepInterval - (runningTime % sleepInterval);
-#if DEBUG
-    log("Will be sleeping for %lu", sleep);
-#endif
-    return sleep;
 }
 
 void setup()
